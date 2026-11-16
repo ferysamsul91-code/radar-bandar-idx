@@ -3,209 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Radar Bandar IDX</title>
-<meta name="description" content="Ekstensi Chrome yang membaca arus lot besar, asing, dan institusi dari layar Stockbit Anda sendiri. Read-only. Bukan rekomendasi beli/jual.">
+<title>REKAP Institusi & Asing</title>
+<meta name="description" content="REKAP harian institusi dan asing beli/jual dari Radar Bandar IDX, diperbarui otomatis setiap penutupan bursa. Bukan rekomendasi beli/jual.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1622'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%2338bdf8' stroke-width='2.5'/%3E%3Cpath d='M16 16 L23 10' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%2322c55e'/%3E%3C/svg%3E">
-<style>
-:root {
-  --bg: #08111b; --panel: #0e1b29; --panel2: #12233a; --line: #1f3550; --text: #e6eef7; --muted: #8aa0b8;
-  --cyan: #38bdf8; --green: #22c55e; --red: #f05252; --amber: #f5a524; --radius: 12px;
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-a { color: var(--cyan); }
-.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-header.top { position: sticky; top: 0; z-index: 5; background: rgba(8, 17, 27, .88); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
-header.top .wrap { display: flex; align-items: center; gap: 16px; height: 58px; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--text); text-decoration: none; }
-.brand svg { width: 26px; height: 26px; }
-nav { margin-left: auto; display: flex; gap: 18px; font-size: 14px; }
-nav a { color: var(--muted); text-decoration: none; }
-nav a:hover { color: var(--text); }
-.hero { padding: 64px 0 40px; display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px; align-items: center; }
-.pill { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; }
-.pill b { color: var(--green); }
-h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.12; margin: 16px 0 14px; letter-spacing: -.02em; }
-h1 span { color: var(--cyan); }
-.lead { color: var(--muted); font-size: 18px; margin: 0 0 26px; }
-.cta { display: flex; gap: 12px; flex-wrap: wrap; }
-.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); color: var(--text); background: var(--panel); }
-.btn.primary { background: var(--cyan); border-color: var(--cyan); color: #04121d; }
-.btn small { font-weight: 500; opacity: .75; }
-.meta { margin-top: 14px; font-size: 13px; color: var(--muted); }
-.shot { border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; background: var(--panel); box-shadow: 0 30px 60px -30px rgba(56, 189, 248, .35); }
-.shot img { display: block; width: 100%; height: auto; }
-.shot figcaption { font-size: 12px; color: var(--muted); padding: 8px 12px; border-top: 1px solid var(--line); }
-.warn { background: rgba(245, 165, 36, .08); border: 1px solid rgba(245, 165, 36, .35); border-radius: var(--radius); padding: 14px 18px; color: #f9d48a; font-size: 15px; }
-section { padding: 48px 0; }
-h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -.01em; }
-.sub { color: var(--muted); margin: 0 0 26px; }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
-.card h3 { margin: 0 0 6px; font-size: 17px; }
-.card p { margin: 0; color: var(--muted); font-size: 15px; }
-.card .ic { font-size: 22px; margin-bottom: 8px; }
-.rules { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-.rule { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; font-size: 14px; color: var(--muted); }
-.rule b { display: block; color: var(--text); font-size: 15px; margin-bottom: 2px; }
-.rule b::before { content: "✓ "; color: var(--green); }
-ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-ol.steps li { counter-increment: s; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px 14px 58px; position: relative; }
-ol.steps li::before { content: counter(s); position: absolute; left: 16px; top: 13px; width: 28px; height: 28px; border-radius: 50%; background: var(--panel2); border: 1px solid var(--cyan); color: var(--cyan); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
-code { background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: .92em; }
-.rel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; }
-.rel summary { cursor: pointer; font-weight: 600; }
-.rel ul { margin: 10px 0 2px; padding-left: 20px; color: var(--muted); }
-.rel li { margin: 4px 0; }
-.rel strong { color: var(--text); }
-.status { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; }
-.stat div { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.stat b { font-size: 17px; }
-.ok { color: var(--green); } .bad { color: var(--red); } .muted { color: var(--muted); }
-footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
-.rk { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
-.rk-meta { margin: 0 0 12px; color: var(--muted); }
-.rk-meta b { color: var(--text); }
-.rk-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.rk-form select, .rk-form input[type=password] { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; min-width: 0; }
-.rk-form input[type=password] { flex: 1 1 220px; }
-.rk-rem { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
-.rk-msg { margin-top: 10px; min-height: 1em; }
-.rk-tabs { display: flex; gap: 8px; margin: 16px 0 6px; }
-.rk-tabs button { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font: inherit; font-weight: 600; cursor: pointer; }
-.rk-tabs button.on { color: #04121d; background: var(--cyan); border-color: var(--cyan); }
-.rk-src { color: var(--muted); font-size: 14px; margin: 10px 0; }
-.rk-src b { color: var(--text); }
-.rk-tots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 6px; }
-.rk-box { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-.rk-box div { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
-.rk-box b { font-size: 20px; }
-.rk h3 { font-size: 16px; margin: 22px 0 8px; color: var(--cyan); }
-.rk h3 small { color: var(--muted); font-weight: 500; }
-.rk-tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-.rk table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
-.rk th { color: var(--muted); font-weight: 600; font-size: 12px; text-align: right; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.rk td { text-align: right; padding: 7px 10px; border-bottom: 1px solid rgba(31, 53, 80, .5); white-space: nowrap; }
-.rk tr:nth-child(even) td { background: rgba(18, 35, 58, .45); }
-.rk th.l, .rk td.code { text-align: left; }
-.rk td.code { font-weight: 700; color: var(--cyan); }
-.rk td.n { color: var(--muted); }
-.rk td small { color: var(--muted); }
-.up { color: var(--green); } .down { color: var(--red); }
-.rk-note { font-size: 13px; margin-top: 16px; }
-@media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; padding-top: 40px; }
-  .grid { grid-template-columns: 1fr 1fr; }
-  .rules { grid-template-columns: 1fr 1fr; }
-  .status { grid-template-columns: 1fr 1fr; }
-  .rk-tots { grid-template-columns: 1fr 1fr; }
-  nav { display: none; }
-}
-@media (max-width: 560px) {
-  .wrap { padding: 0 16px; }
-  .grid, .rules, .status { grid-template-columns: 1fr; }
-  .btn { width: 100%; justify-content: center; }
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="#">
+    <a class="brand" href="./">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#12233a"/><circle cx="16" cy="16" r="9" fill="none" stroke="#38bdf8" stroke-width="2.5"/><path d="M16 16 L23 10" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/><circle cx="16" cy="16" r="2.5" fill="#22c55e"/></svg>
       Radar Bandar IDX
     </a>
-    <nav><a href="#rekap-harian">REKAP harian</a><a href="#fitur">Fitur</a><a href="#aman">Prinsip</a><a href="#pasang">Cara pasang</a><a href="#perubahan">Perubahan</a></nav>
+    <nav><a class="page cur" href="./">REKAP</a><a class="page" href="ekstensi.html">Ekstensi</a></nav>
   </div>
 </header>
 
 <main class="wrap">
-  <div class="hero">
+  <div class="dash-head">
     <div>
-      <span class="pill">Versi <b>v{{VERSION}}</b> • diperbarui {{UPDATED}}</span>
-      <h1>Baca jejak <span>institusi & asing</span> langsung dari layar Stockbit Anda</h1>
-      <p class="lead">Ekstensi Chrome yang merangkum lot besar, aliran asing, dan net beli institusi dari halaman Stockbit yang Anda buka sendiri. Rekap penutupan, rentang tanggal, PDF, semuanya di browser Anda.</p>
-      <div class="cta">
-        <a class="btn primary" href="{{ZIP}}" download>⬇ Unduh v{{VERSION}} <small>ZIP • {{ZIP_SIZE}}</small></a>
-        <a class="btn" href="#pasang">Cara pasang</a>
-      </div>
-      <p class="meta">Chrome / Edge desktop • Manifest V3 • butuh akun Stockbit Anda sendiri</p>
+      <h1>REKAP Institusi & Asing</h1>
+      <p>Net beli/jual institusi dan asing per hari bursa, diperbarui otomatis setelah penutupan.</p>
     </div>
-    <figure class="shot" style="margin:0">
-      <img src="assets/rekap.png" width="862" height="800" alt="Panel Radar Bandar IDX, tab REKAP: daftar total institusi net beli dan net jual, serta deteksi institusi beli">
-      <figcaption>Tab REKAP • contoh dengan data rekaan (kode fiktif), bukan data pasar.</figcaption>
-    </figure>
+    <span class="live"><i></i><span id="live-text">memeriksa data…</span></span>
   </div>
 
-  <div class="warn"><b>Bukan rekomendasi beli/jual.</b> Radar Bandar IDX adalah alat bantu membaca arus order untuk pemakaian pribadi. Angka institusi adalah ESTIMASI (gabungan broker pilihan Anda atau pola lot besar). Tidak berafiliasi dengan Stockbit maupun Bursa Efek Indonesia. Membaca tampilan Stockbit berada di area abu-abu ketentuan layanannya; risikonya Anda tanggung.</div>
+  <div id="rekap" class="rk"><p class="muted">Memuat…</p></div>
+  <noscript><p class="muted">Butuh JavaScript untuk membuka data.</p></noscript>
 
-  <section id="rekap-harian">
-    <h2>REKAP harian</h2>
-    <p class="sub">Institusi & asing beli/jual dari ekstensi pemilik halaman, diperbarui otomatis tiap hari bursa setelah penutupan. Data terenkripsi: masukkan kata sandi data untuk membuka. Kata sandi tidak dikirim ke mana pun.</p>
-    <div id="rekap" class="rk"><p class="muted">Memuat…</p></div>
-    <noscript><p class="muted">Butuh JavaScript untuk membuka data.</p></noscript>
-  </section>
-
-  <section id="fitur">
-    <h2>Fitur</h2>
-    <p class="sub">Semua dihitung dari apa yang tampil di layar Stockbit Anda.</p>
-    <div class="grid">
-      <div class="card"><div class="ic">📋</div><h3>Daftar total institusi</h3><p>Semua emiten net beli dan net jual institusi dalam satu peringkat: nilai, porsi dari total, hari beli, dan arah asing.</p></div>
-      <div class="card"><div class="ic">🏦</div><h3>Deteksi institusi beli</h3><p>Pola lot besar beruntun saat jam bursa, dipisahkan ASING atau INSTITUSI/LOKAL, lalu dicocokkan dengan Broker Analysis.</p></div>
-      <div class="card"><div class="ic">🗓️</div><h3>REKAP penutupan & rentang</h3><p>Asing dan institusi hari ini, 5 hari terakhir, atau rentang tanggal bebas. Export PDF dan CSV.</p></div>
-      <div class="card"><div class="ic">⟳</div><h3>AUTO REKAP</h3><p>Data asing (Movers) dan institusi (Broker Analysis) diambil otomatis setelah 16:20 WIB tiap hari bursa.</p></div>
-      <div class="card"><div class="ic">📡</div><h3>Scanner & skor flow</h3><p>Lot besar, status bid/offer, pergantian sisi, dan prioritas pantau dari running trade dan orderbook.</p></div>
-      <div class="card"><div class="ic">📈</div><h3>Divergence RSI 14</h3><p>Hidden bullish, bullish, hidden bearish, dan bearish divergence dari tabel Chartbit.</p></div>
-    </div>
-  </section>
-
-  <section id="aman">
-    <h2>Prinsip</h2>
-    <p class="sub">Dibuat agar data dan akun Anda tetap di tangan Anda.</p>
-    <div class="rules">
-      <div class="rule"><b>Hanya membaca layar</b>Membaca halaman Stockbit yang sudah Anda buka dan login sendiri.</div>
-      <div class="rule"><b>Tanpa API internal</b>Tidak memanggil API Stockbit di balik layar.</div>
-      <div class="rule"><b>Tanpa cookie/token</b>Tidak membaca atau menyimpan sesi login Anda.</div>
-      <div class="rule"><b>Tanpa kirim data</b>Riwayat disimpan lokal di Chrome Anda. Pengecualian: Publikasi online yang Anda aktifkan sendiri, terenkripsi.</div>
-      <div class="rule"><b>Tanpa order</b>Tidak bisa membeli atau menjual apa pun.</div>
-    </div>
-  </section>
-
-  <section id="pasang">
-    <h2>Cara pasang</h2>
-    <p class="sub">Belum ada di Chrome Web Store, jadi dipasang sebagai ekstensi "unpacked".</p>
-    <ol class="steps">
-      <li><b>Unduh dan ekstrak</b> <a href="{{ZIP}}" download>{{ZIP}}</a>. Hasilnya folder <code>radar-bandar-idx</code>.</li>
-      <li>Buka <code>chrome://extensions</code>, nyalakan <b>Developer mode</b> di kanan atas.</li>
-      <li>Klik <b>Load unpacked</b>, pilih folder <code>radar-bandar-idx</code>.</li>
-      <li>Login Stockbit sendiri, buka <code>stockbit.com/orderbook</code>. Panel radar muncul di kanan.</li>
-      <li><b>Update:</b> unduh versi baru, timpa isi folder, lalu klik ↻ di kartu ekstensi dan refresh tab Stockbit. Riwayat REKAP tetap tersimpan.</li>
-    </ol>
-  </section>
-
-  <section id="perubahan">
-    <h2>Catatan perubahan</h2>
-    <p class="sub">Versi terbaru di atas.</p>
-    {{CHANGELOG}}
-  </section>
-
-  <section id="status">
-    <h2>Status build</h2>
-    <p class="sub">Halaman ini dibangun ulang otomatis setiap hari (06:00 WIB) dan setiap ada perubahan kode.</p>
-    <div class="status">
-      <div class="stat"><div>Versi</div><b>v{{VERSION}}</b></div>
-      <div class="stat"><div>Diperbarui</div><b>{{UPDATED}}</b></div>
-      <div class="stat"><div>Tes</div><b class="{{TESTS_CLASS}}">{{TESTS}}</b></div>
-      <div class="stat"><div>Commit</div><b>{{COMMIT}}</b></div>
-    </div>
-  </section>
+  <p class="slim-warn"><b>Bukan rekomendasi beli/jual.</b> Institusi = ESTIMASI dari gabungan broker pilihan di Broker Analysis; asing = Net Foreign Stockbit. Tidak berafiliasi dengan Stockbit maupun Bursa Efek Indonesia.</p>
 </main>
 
 <footer>
   <div class="wrap">
-    Radar Bandar IDX v{{VERSION}} • alat bantu baca arus order, <b>bukan rekomendasi beli/jual</b> • tidak berafiliasi dengan Stockbit atau Bursa Efek Indonesia • data REKAP di halaman ini terenkripsi dan hanya terbaca dengan kata sandi pemiliknya.
+    Data dikirim otomatis oleh ekstensi <a href="ekstensi.html">Radar Bandar IDX v{{VERSION}}</a> dalam keadaan terenkripsi; dibuka di browser Anda dengan kata sandi data. Halaman dibangun {{UPDATED}}.
   </div>
 </footer>
 <script type="module" src="rekap.js"></script>

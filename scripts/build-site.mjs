@@ -150,10 +150,12 @@ const vars = {
   TESTS_CLASS: testsOk === null ? "muted" : testsOk ? "ok" : "bad",
   CHANGELOG: changelogHtml(readFileSync(join(root, "CHANGELOG.md"), "utf8")),
 };
-const page = readFileSync(join(out, "index.html"), "utf8").replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
-const left = page.match(/\{\{\w+\}\}/g);
-if (left) throw new Error(`placeholder belum terisi: ${left.join(", ")}`);
-writeFileSync(join(out, "index.html"), page);
+for (const f of readdirSync(out).filter((x) => x.endsWith(".html"))) {
+  const page = readFileSync(join(out, f), "utf8").replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
+  const left = page.match(/\{\{\w+\}\}/g);
+  if (left) throw new Error(`${f}: placeholder belum terisi: ${left.join(", ")}`);
+  writeFileSync(join(out, f), page);
+}
 writeFileSync(join(out, "version.json"), JSON.stringify({ version, updated: now.toISOString(), commit, tests, zip: zipName }, null, 2));
 writeFileSync(join(out, ".nojekyll"), "");
 

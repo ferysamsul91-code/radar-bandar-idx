@@ -107,70 +107,142 @@ const store = {
   set: (v) => { try { v ? localStorage.setItem(PASS_KEY, v) : localStorage.removeItem(PASS_KEY); } catch { /* mode privat */ } },
 };
 
-export async function init(root) {
-  let index;
+const REFRESH_MS = 5 * 60e3;
+const ago = (t) => {
+  const m = Math.round((Date.now() - t) / 60e3);
+  return m < 1 ? "baru saja" : m < 60 ? `${m} menit lalu` : m < 48 * 60 ? `${Math.round(m / 60)} jam lalu` : `${Math.round(m / 1440)} hari lalu`;
+};
+async function loadIndex() {
   try {
     const r = await fetch(`data/index.json?t=${Date.now()}`, { cache: "no-store" });
-    index = r.ok ? await r.json() : null;
-  } catch { index = null; }
+    return r.ok ? await r.json() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Dashboard REKAP: langsung membuka hari bursa terbaru (kata sandi diingat di perangkat ini),
+ * memeriksa data baru tiap 5 menit dan memuatnya sendiri.
+ */
+export async function init(root, liveEl = null) {
+  const live = (t) => liveEl && (liveEl.textContent = t);
+  let index = await loadIndex();
   if (!index?.days?.length) {
-    root.innerHTML = `<p class="muted">Belum ada data REKAP yang dipublikasikan. Aktifkan <b>Publikasi online</b> di pengaturan ekstensi; data muncul di sini setelah penutupan hari bursa berikutnya.</p>`;
+    live("menunggu REKAP pertama");
+    root.innerHTML = `<div class="rk-empty"><b>Belum ada REKAP</b>REKAP muncul di sini otomatis setelah ekstensi mengirim data penutupan pertama
+      (setiap hari bursa, setelah 16:20 WIB). Halaman memeriksa data baru setiap 5 menit.</div>`;
+    setTimeout(() => void init(root, liveEl), REFRESH_MS);
     return;
   }
-  const latest = index.days[0];
-  root.innerHTML = `<p class="rk-meta">Data terbaru: <b>${fmtDay(latest.day)}</b> • diperbarui ${wib(latest.updatedAt)} • ${index.days.length} hari tersimpan</p>
-    <form class="rk-form" autocomplete="off">
-      <select class="rk-day" aria-label="Hari bursa">${index.days.map((d) => `<option value="${esc(d.day)}">${fmtDay(d.day)}</option>`).join("")}</select>
-      <input class="rk-pass" type="password" placeholder="Kata sandi data" aria-label="Kata sandi data" autocomplete="current-password">
-      <button class="btn primary" type="submit">Buka</button>
-      <label class="rk-rem"><input type="checkbox" class="rk-remember"> Ingat di perangkat ini</label>
-    </form>
+  root.innerHTML = `<div class="rk-bar">
+      <div class="rk-left"><label>Hari bursa <select class="rk-day" aria-label="Hari bursa"></select></label><span class="rk-upd"></span></div>
+      <div class="rk-tabs"><button type="button" data-v="today" class="on">Hari ini</button><button type="button" data-v="d5">5 hari bursa</button></div>
+    </div>
+    <div class="rk-lock" hidden>
+      <p>🔒 Data terenkripsi. Masukkan kata sandi data sekali; dengan "Ingat di perangkat ini", REKAP berikutnya langsung terbuka.</p>
+      <form class="rk-form" autocomplete="off">
+        <input class="rk-pass" type="password" placeholder="Kata sandi data" aria-label="Kata sandi data" autocomplete="current-password">
+        <button class="btn primary" type="submit">Buka</button>
+        <label class="rk-rem"><input type="checkbox" class="rk-remember" checked> Ingat di perangkat ini</label>
+      </form>
+    </div>
     <div class="rk-msg muted"></div>
-    <div class="rk-view" hidden><div class="rk-tabs"><button type="button" data-v="today" class="on">Hari ini</button><button type="button" data-v="d5">5 hari bursa</button></div><div class="rk-body"></div></div>`;
+    <div class="rk-body"></div>
+    <p class="rk-foot muted" hidden>🔓 Terbuka di perangkat ini • <button type="button" class="linkbtn rk-forget">Kunci & lupakan kata sandi</button></p>`;
   const $ = (s) => root.querySelector(s);
+  const sel = $(".rk-day");
   const pass = $(".rk-pass");
-  const remember = $(".rk-remember");
   const msg = $(".rk-msg");
+  let key = store.get();
   let payload = null;
   let view = "today";
+  let followLatest = true;
+
+  const fillDays = () => {
+    const cur = sel.value;
+    sel.innerHTML = index.days.map((d) => `<option value="${esc(d.day)}">${fmtDay(d.day)}</option>`).join("");
+    sel.value = followLatest || !cur ? index.days[0].day : cur;
+    const d = index.days.find((x) => x.day === sel.value) ?? index.days[0];
+    $(".rk-upd").textContent = `diperbarui ${wib(d.updatedAt)} (${ago(d.updatedAt)})`;
+    live(`data terbaru ${fmtDay(index.days[0].day)} • cek otomatis tiap 5 menit`);
+  };
   const show = () => {
-    $(".rk-body").innerHTML = renderPayload(payload, view);
+    $(".rk-body").innerHTML = payload ? renderPayload(payload, view) : "";
     root.querySelectorAll(".rk-tabs button").forEach((b) => b.classList.toggle("on", b.dataset.v === view));
   };
+  const locked = (on) => {
+    $(".rk-lock").hidden = !on;
+    $(".rk-foot").hidden = on || !store.get();
+  };
   const open = async () => {
-    const day = $(".rk-day").value;
+    const day = sel.value;
+    if (!key) {
+      locked(true);
+      return;
+    }
     msg.textContent = "Membuka…";
     try {
       const r = await fetch(`data/days/${encodeURIComponent(day)}.enc.json?t=${Date.now()}`, { cache: "no-store" });
       if (!r.ok) throw new Error(`file ${day} tidak ditemukan`);
-      payload = await openSealed(await r.json(), pass.value);
-      store.set(remember.checked ? pass.value : "");
+      payload = await openSealed(await r.json(), key);
       msg.textContent = "";
-      $(".rk-view").hidden = false;
+      locked(false);
       show();
     } catch (e) {
+      payload = null;
+      show();
       msg.textContent = e instanceof Error ? e.message : String(e);
-      $(".rk-view").hidden = true;
+      if (/kata sandi/.test(msg.textContent)) {
+        key = "";
+        store.set("");
+        locked(true);
+      }
     }
   };
+
   $(".rk-form").addEventListener("submit", (e) => {
     e.preventDefault();
+    key = pass.value;
+    if ($(".rk-remember").checked) store.set(key);
+    pass.value = "";
     void open();
   });
-  $(".rk-day").addEventListener("change", () => pass.value && void open());
+  sel.addEventListener("change", () => {
+    followLatest = sel.value === index.days[0].day;
+    fillDays();
+    void open();
+  });
   root.querySelectorAll(".rk-tabs button").forEach((b) => b.addEventListener("click", () => {
     view = b.dataset.v;
     show();
   }));
-  const saved = store.get();
-  if (saved) {
-    pass.value = saved;
-    remember.checked = true;
-    void open();
-  }
+  $(".rk-forget").addEventListener("click", () => {
+    store.set("");
+    key = "";
+    payload = null;
+    show();
+    locked(true);
+  });
+
+  fillDays();
+  await open();
+
+  // Cek data baru berkala; bila ada hari/versi baru dan sedang melihat yang terbaru, muat ulang sendiri.
+  setInterval(async () => {
+    const next = await loadIndex();
+    if (!next?.days?.length) return;
+    const changed = next.days[0].day !== index.days[0].day || next.days[0].updatedAt !== index.days[0].updatedAt;
+    index = next;
+    fillDays();
+    if (changed && followLatest) {
+      await open();
+      if (payload) msg.textContent = `REKAP baru dimuat: ${fmtDay(index.days[0].day)}`;
+    }
+  }, REFRESH_MS);
 }
 
 if (typeof document !== "undefined") {
   const root = document.getElementById("rekap");
-  if (root) void init(root);
+  if (root) void init(root, document.getElementById("live-text"));
 }
