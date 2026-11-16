@@ -1,0 +1,63 @@
+# Landing page Radar Bandar IDX di GitHub Pages.
+# Jalan saat push ke main, tiap hari 06:00 WIB (23:00 UTC), dan manual (Run workflow).
+# Hanya membangun dari kode di repo ini: tidak membuka Stockbit, tidak memakai login/cookie/token Stockbit.
+name: Landing page
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Fixture HTML Stockbit tidak ikut repo (.gitignore), jadi tes penuh dijalankan lokal sebelum rilis.
+      - name: Tes (bila fixture tersedia)
+        run: |
+          if [ -f fixtures/orderbook-widgets.html ]; then
+            npx vitest run --reporter=default --reporter=json --outputFile=test-results.json
+          else
+            echo "fixture tidak ada di repo: tes dilewati"
+          fi
+        env:
+          VITE_CONFIG_NATIVE_IGNORE_WARNING: "true"
+      - name: Build ekstensi
+        run: npm run build
+        env:
+          VITE_CONFIG_NATIVE_IGNORE_WARNING: "true"
+      - name: Build landing page
+        run: node scripts/build-site.mjs
+        env:
+          TEST_JSON: test-results.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

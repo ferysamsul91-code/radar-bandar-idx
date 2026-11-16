@@ -1,0 +1,7 @@
+node_modules/
+dist/
+fixtures/*.html
+fixtures/*_files/
+_site/
+test-results.json
+*.log

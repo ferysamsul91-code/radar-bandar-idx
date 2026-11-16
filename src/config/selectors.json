@@ -1,0 +1,59 @@
+{
+  "_note": "Diambil dari DOM asli stockbit.com/orderbook pada 2026-11-13 (lihat fixtures/orderbook-widgets.html). Class CSS Stockbit berupa hash styled-components yang berubah-ubah, jadi parser memakai atribut & teks label, bukan class.",
+  "orderbook": {
+    "verified": "2026-11-13",
+    "codeInput": "input[type=\"search\"][role=\"combobox\"]:not([readonly]):not([data-cy*=\"navbar\"])",
+    "_codeInputNote": "Kotak pencarian global Stockbit (data-cy=top-navbar-search-input) & dropdown readonly dikecualikan (dicek live 2026-11-14).",
+    "statLabel": "[type=\"label\"]",
+    "statValue": "[type=\"value\"]",
+    "headerLabels": ["Freq", "Lot", "Bid", "Offer", "Lot", "Freq"],
+    "maxAncestorDepth": 12,
+    "statKeys": {
+      "Open": "open",
+      "Prev": "prev",
+      "Lot": "totalLot",
+      "High": "high",
+      "ARA": "ara",
+      "Val": "totalValue",
+      "Low": "low",
+      "ARB": "arb",
+      "Avg": "avg",
+      "F Buy": "foreignBuy",
+      "F Sell": "foreignSell",
+      "Freq": "freq"
+    }
+  },
+  "runningTrade": {
+    "_note": "Panel samping 'Running Trade' di stockbit.com/orderbook (ikon ke-3 di sisi kanan). Setelah tutup (2026-11-13): satu tabel + kolom Buyer/Seller. Saat sesi live (2026-11-16): judul & isi di dua tabel, baris pengukur aria-hidden, tr[data-row-key=KODE|NOMOR|EPOCH], TANPA kolom broker (BEI menyembunyikan broker selama jam bursa). Lihat fixtures/running-trade*.html.",
+    "verified": "2026-11-13",
+    "container": "#running-trade",
+    "columns": {
+      "Time": "time",
+      "Code": "code",
+      "Price": "price",
+      "Action": "action",
+      "Lot": "lot",
+      "Buyer": "buyer",
+      "Seller": "seller",
+      "Val": "value",
+      "Market": "market"
+    }
+  },
+  "brokerSummary": {
+    "_note": "Widget 'Broker Summary' di kolom kanan stockbit.com/symbol/KODE. Diambil 2026-11-14 (data 13 Nov 26); lihat fixtures/broker-summary.html. Kode broker: <p type=foreign|local|bumn>.",
+    "verified": "2026-11-14",
+    "title": "Broker Summary",
+    "maxAncestorDepth": 8,
+    "brokerTypeAttr": "type",
+    "columns": {
+      "BY": "buyer",
+      "B.val": "buyVal",
+      "B.lot": "buyLot",
+      "B.avg": "buyAvg",
+      "SL": "seller",
+      "S.val": "sellVal",
+      "S.lot": "sellLot",
+      "S.avg": "sellAvg"
+    }
+  }
+}

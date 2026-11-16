@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Radar Bandar IDX",
+  "version": "0.13.0",
+  "description": "Membaca running trade, orderbook & Broker Summary Stockbit yang tampil di layar (read-only). Bukan rekomendasi beli/jual.",
+  "permissions": ["storage", "unlimitedStorage"],
+  "content_scripts": [
+    {
+      "matches": ["https://stockbit.com/orderbook*", "https://stockbit.com/symbol/*", "https://stockbit.com/broker-analysis/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

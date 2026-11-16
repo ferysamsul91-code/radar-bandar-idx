@@ -1,0 +1,6 @@
+{
+  "_note": "Mapping awal dari pengetahuan umum, BELUM diverifikasi ke daftar anggota bursa terbaru. Kategori hanya bobot, bukan kepastian. Edit sesuai kebutuhan.",
+  "FOREIGN_INST": { "AK": "UBS Sekuritas", "BK": "J.P. Morgan Sekuritas", "ZP": "Maybank Sekuritas", "KZ": "CLSA Sekuritas", "RX": "Macquarie Sekuritas", "GW": "HSBC Sekuritas", "CG": "Citigroup Sekuritas", "YU": "CGS International Sekuritas", "AI": "UOB Kay Hian Sekuritas", "DR": "RHB Sekuritas", "HD": "KGI Sekuritas", "FS": "Yuanta Sekuritas" },
+  "LOCAL_INST": { "CC": "Mandiri Sekuritas", "NI": "BNI Sekuritas", "DX": "Bahana Sekuritas", "LG": "Trimegah Sekuritas", "KI": "Ciptadana Sekuritas", "OD": "BRI Danareksa Sekuritas", "SQ": "BCA Sekuritas", "RF": "Buana Capital", "IF": "Samuel Sekuritas", "MG": "Semesta Indovest" },
+  "RETAIL_HEAVY": { "YP": "Mirae Asset Sekuritas", "XC": "Ajaib Sekuritas", "XL": "Stockbit Sekuritas", "PD": "Indo Premier Sekuritas", "KK": "Phillip Sekuritas", "CP": "Valbury Sekuritas", "EP": "MNC Sekuritas", "GR": "Panin Sekuritas" }
+}

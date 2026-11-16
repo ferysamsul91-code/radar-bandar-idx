@@ -1,0 +1,165 @@
+{
+  "modes": {
+    "scalping": {
+      "windowsSec": [
+        30,
+        180,
+        900
+      ],
+      "minBigValue": 250000000,
+      "flowKuatAggrFlow": 1000000000
+    },
+    "intraday": {
+      "windowsSec": [
+        180,
+        900,
+        3600
+      ],
+      "minBigValue": 1000000000,
+      "flowKuatAggrFlow": 5000000000
+    }
+  },
+  "bigLot": {
+    "percentile": 95,
+    "lookbackTrades": 500,
+    "minLotByPrice": [
+      {
+        "maxPrice": 200,
+        "lot": 5000
+      },
+      {
+        "maxPrice": 1000,
+        "lot": 2000
+      },
+      {
+        "maxPrice": 5000,
+        "lot": 500
+      },
+      {
+        "maxPrice": null,
+        "lot": 200
+      }
+    ],
+    "superMultiplier": 3,
+    "superValue": 5000000000,
+    "clusterGapSec": 3,
+    "clusterTickTolerance": 1,
+    "mediumRatio": 0.3
+  },
+  "status": {
+    "flowKuat": {
+      "buyPct3m": 0.75,
+      "requireBigNetPositive": true
+    },
+    "padaBeli": {
+      "buyPct30s": 0.8
+    },
+    "cuanMenanti": {
+      "buyPct15m": 0.6,
+      "maxVwapDistance": 0.005
+    },
+    "padaJualan": {
+      "maxBuyPct3m": 0.25
+    },
+    "sideChange": {
+      "confirmSec": 20,
+      "minBigTrades": 2
+    },
+    "rame": {
+      "beli": 0.6,
+      "jual": 0.4,
+      "_note": "ESTIMASI: label RAME BELI/JUAL dari buyPct window tengah"
+    },
+    "volatilityWarn": 0.15
+  },
+  "score": {
+    "weights": {
+      "buyPct3m": 30,
+      "aggrFlow": 20,
+      "bigNet": 20,
+      "instNet": 10,
+      "lifecycle": 10,
+      "quality": 10
+    },
+    "penalties": {
+      "bidDitarik": 15,
+      "refillOffer": 10,
+      "nearAra": 10,
+      "vwapTooFar": 10
+    },
+    "grades": {
+      "A+": 90,
+      "A": 80,
+      "B": 65
+    },
+    "aggrFlowNormMinutes": 3,
+    "_note": "ESTIMASI: normalisasi aggrFlow = aggrFlow / (median value per menit x aggrFlowNormMinutes). Sesuaikan setelah replay."
+  },
+  "quality": {
+    "minTrades": 30,
+    "staleSec": 60,
+    "lowQ": 50
+  },
+  "vwap": {
+    "dekat": 0.005,
+    "wajar": 0.02
+  },
+  "aqi": {
+    "thick": 1.5
+  },
+  "toast": {
+    "maxQueue": 3,
+    "cooldownSec": 60,
+    "sound": false
+  },
+  "autoRekap": {
+    "_note": "AUTO REKAP: ekstensi memuat Broker Analysis & Movers di iframe tersembunyi pada tab Stockbit yang terbuka, mengklik chip Recent Selected Broker (harus sama dengan brokers) & tab Net Foreign Buy/Sell, lalu menyimpan. Tanpa API. intradayMin=0 mematikan pembaruan Movers saat sesi.",
+    "enabled": true,
+    "afterWIB": "16:20",
+    "intradayMin": 30,
+    "brokers": ["AK", "ZP", "BK", "KZ", "RX"],
+    "maxAttempts": 2
+  },
+  "divergence": {
+    "_note": "ESTIMASI. Gaya indikator Divergences TradingView: pivot osilator kiri/kanan, jarak pivot minRange..maxRange candle. oscillator: RSI (bawaan: kolom RSI dari Table view, atau RSI 14 dihitung radar bila tidak ada) | auto | Stoch RSI | MACD | rsi-calc. Sinyal 'baru' bila pivot kedua <= maxAgeBars candle lalu.",
+    "left": 5,
+    "right": 5,
+    "minRange": 5,
+    "maxRange": 60,
+    "maxAgeBars": 15,
+    "oscillator": "RSI"
+  },
+  "instTrace": {
+    "_note": "ESTIMASI. JEJAK INSTITUSI: rangkaian trade broker yang sama (beli/jual, bukan sisi agresor), jeda <= windowSec, minimal minTrades trade bernilai >= minTradeValue dengan total >= minRunValue. Broker ritel di excludeBrokers tidak dihitung. Saat jam bursa (broker disembunyikan BEI) dipakai POLA LOT BESAR LIVE: rangkaian per sisi agresor; ASING bila F Buy/F Sell widget naik >= foreignShareMin x nilai rangkaian.",
+    "windowSec": 300,
+    "minTrades": 3,
+    "minRunValue": 1000000000,
+    "minTradeValue": 100000000,
+    "excludeBrokers": ["XL", "XC"],
+    "skipCross": true,
+    "foreignShareMin": 0.5
+  },
+  "brokerSummary": {
+    "_note": "ESTIMASI: label AKUMULASI/DISTRIBUSI = (top N beli - top N jual) / (top N beli + top N jual). Bukan Broker Action Stockbit.",
+    "topN": 3,
+    "accDistThreshold": 0.3,
+    "maxAgeHours": 24
+  },
+  "dailyResetWIB": "08:45",
+  "sessions": {
+    "_note": "Jam WIB. Hari libur bursa tidak dideteksi.",
+    "preOpen": ["08:45", "08:59"],
+    "weekday": { "sesi1": ["09:00", "12:00"], "sesi2": ["13:30", "15:49"] },
+    "friday": { "sesi1": ["09:00", "11:30"], "sesi2": ["14:00", "15:49"] },
+    "preClose": ["15:50", "16:00"]
+  },
+  "lifecycle": {
+    "_note": "ESTIMASI awal, belum dikalibrasi dengan data live",
+    "levels": 5,
+    "thickVsMedian": 2,
+    "holdSec": 30,
+    "eventTtlSec": 60,
+    "refillWindowSec": 30,
+    "tradeExplainRatio": 0.5
+  }
+}
