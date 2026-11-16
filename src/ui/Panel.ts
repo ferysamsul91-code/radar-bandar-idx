@@ -22,7 +22,7 @@ export interface RekapSources {
   inst: InstSnap | null;
 }
 
-export const VERSION = "0.13.0";
+export const VERSION = "0.14.0";
 export const HOST_ID = "radar-bandar-idx-host";
 
 export type Mode = "SCALPING" | "INTRADAY";
@@ -75,6 +75,9 @@ export interface PanelState {
   /** Hasil AUTO REKAP terakhir & konfigurasinya. */
   autoInfo: string;
   autoCfg: AutoRekapCfg;
+  /** PUBLIKASI ONLINE (opsional): aktif? + status kiriman terakhir. */
+  publishOn: boolean;
+  publishInfo: string;
 }
 
 export interface TradeRow {
@@ -112,6 +115,8 @@ export interface PanelHooks {
   onExportBackup?(): void;
   onSaveScanList?(codes: string[]): void;
   onAutoRekap?(): void;
+  onPublish?(): void;
+  onPublishSettings?(): void;
   /** Kembalikan pesan hasil impor. */
   onImportBackup?(text: string): string;
   getSettings?(): { current: UserSettings; defaults: UserSettings; info: SettingsInfo };
@@ -138,7 +143,7 @@ export class Panel {
     trades: 0, dup: 0, parserPct: null, obOk: 0, obTotal: 0, bookRows: [], rtFreshSec: null, brokerVisible: false,
     recentTrades: [], views: [], bigs: [], now: Date.now(), phase: "", watch: [], bs: [], rekap: { fb: null, fs: null, inst: null },
     rekapHist: { fbuy: {}, fsell: {}, inst: {} }, rekapRange: { mode: "latest" }, tradingDay: "",
-    inst: { events: [], nets: [], cfg: DEFAULT_INST_TRACE }, rekapMissing: null, charts: [], divCfg: DEFAULT_DIV, scanList: [], autoInfo: "", autoCfg: DEFAULT_AUTO,
+    inst: { events: [], nets: [], cfg: DEFAULT_INST_TRACE }, rekapMissing: null, charts: [], divCfg: DEFAULT_DIV, scanList: [], autoInfo: "", autoCfg: DEFAULT_AUTO, publishOn: false, publishInfo: "",
   };
 
   constructor(doc: Document = document) {
@@ -177,7 +182,7 @@ export class Panel {
       case "BESAR / RITEL": return bigTable(v, s.bigs);
       case "JEJAK INSTITUSI": return instTraceView(s.inst, s.now, s.rtFreshSec !== null, s.brokerVisible, new Set(s.watch));
       case "DIVERGENCE": return divergenceView(s.charts, s.divCfg, new Set(s.watch), s.scanList, s.tradingDay);
-      case "REKAP": return rekapView(s.rekap, s.rekapHist, s.rekapRange, s.tradingDay, s.now, s.rekapMissing, { info: s.autoInfo, cfg: s.autoCfg });
+      case "REKAP": return rekapView(s.rekap, s.rekapHist, s.rekapRange, s.tradingDay, s.now, s.rekapMissing, { info: s.autoInfo, cfg: s.autoCfg, pubOn: s.publishOn, pubInfo: s.publishInfo });
       case "ASING / LOKAL":
         return `<h4 class="sec">RUNNING TRADE (D/F + broker)</h4>${partyTable(v, s.brokerVisible)}<h4 class="sec">BROKER SUMMARY</h4>${brokerSummaryTable(s.bs, s.now)}`;
     }
@@ -329,6 +334,11 @@ export class Panel {
     );
     this.mount.querySelector<HTMLButtonElement>(".body button[data-rekap=csv]")?.addEventListener("click", () => this.hooks.onExportRekap?.());
     this.mount.querySelector<HTMLButtonElement>(".body button[data-rekap=pdf]")?.addEventListener("click", () => this.hooks.onExportRekapPdf?.());
+    this.mount.querySelector<HTMLButtonElement>(".body button[data-rekap=publish]")?.addEventListener("click", () => {
+      this.hooks.onPublish?.();
+      this.setHint("PUBLIKASI: mengenkripsi & mengirim…");
+    });
+    this.mount.querySelector<HTMLButtonElement>(".body button[data-rekap=pubcfg]")?.addEventListener("click", () => this.hooks.onPublishSettings?.());
     this.mount.querySelector<HTMLButtonElement>(".body button[data-rekap=auto]")?.addEventListener("click", () => {
       this.hooks.onAutoRekap?.();
       this.setHint("AUTO REKAP: dimulai…");

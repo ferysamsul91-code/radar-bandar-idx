@@ -1,11 +1,11 @@
 {
   "name": "radar-bandar-idx",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
   "description": "Ekstensi Chrome MV3: membaca DOM running trade & orderbook Stockbit (read-only). Bukan rekomendasi beli/jual.",
   "type": "module",
   "scripts": {
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && vite build --mode background && vite build --mode options",
     "dev": "vite build --watch",
     "test": "vitest run",
     "test:watch": "vitest",

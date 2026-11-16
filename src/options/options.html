@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar Bandar IDX: Publikasi online</title>
+<style>
+:root { --bg:#08111b; --panel:#0e1b29; --panel2:#12233a; --line:#1f3550; --text:#e6eef7; --muted:#8aa0b8; --cyan:#38bdf8; --green:#22c55e; --red:#f05252; --amber:#f5a524; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 32px 20px 60px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+.sub { color: var(--muted); margin: 0 0 22px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+.warn { border-color: rgba(245,165,36,.4); background: rgba(245,165,36,.07); color: #f9d48a; }
+label { display: block; font-weight: 600; margin: 12px 0 4px; }
+label.inline { display: flex; gap: 8px; align-items: center; font-weight: 600; margin: 0; }
+input[type=text], input[type=password] { width: 100%; padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; }
+.hint { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+button { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+button.primary { background: var(--cyan); border-color: var(--cyan); color: #04121d; }
+button.danger { border-color: rgba(240,82,82,.5); color: #ffb4b4; }
+#msg { margin-top: 14px; white-space: pre-wrap; }
+.ok { color: var(--green); } .bad { color: var(--red); }
+ol { padding-left: 20px; margin: 6px 0 0; } li { margin: 4px 0; }
+code { background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+a { color: var(--cyan); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Publikasi REKAP online</h1>
+  <p class="sub">Radar Bandar IDX • kirim ringkasan REKAP harian ke repo GitHub Anda, terenkripsi, untuk landing page.</p>
+
+  <div class="box warn">
+    <b>Pengecualian aturan "tanpa mengirim data ke luar".</b> Bila diaktifkan, setiap hari bursa setelah data penutupan lengkap
+    (atau setelah 18:00), ekstensi mengirim <b>ringkasan REKAP</b> (daftar institusi & asing beli/jual, deteksi institusi beli)
+    ke repo GitHub yang Anda isi di bawah. Isinya <b>dienkripsi dengan kata sandi Anda</b> sebelum keluar dari komputer;
+    tanpa kata sandi, orang lain hanya melihat data acak. Token dan kata sandi disimpan lokal di Chrome Anda dan hanya dipakai
+    di halaman ini dan service worker ekstensi, tidak pernah di halaman Stockbit. Bukan rekomendasi beli/jual.
+  </div>
+
+  <div class="box">
+    <label class="inline"><input type="checkbox" id="on"> Aktifkan publikasi online</label>
+
+    <label for="repo">Repo GitHub</label>
+    <input type="text" id="repo" placeholder="pemilik/nama-repo" autocomplete="off" spellcheck="false">
+    <div class="hint">Repo landing page Anda, mis. <code>pemilik/radar-bandar-idx</code>. File ditulis ke <code>data/days/TANGGAL.enc.json</code>.</div>
+
+    <label for="branch">Branch</label>
+    <input type="text" id="branch" value="main" autocomplete="off" spellcheck="false">
+
+    <label for="token">Token GitHub (fine-grained)</label>
+    <input type="password" id="token" autocomplete="off" spellcheck="false">
+    <div class="hint" id="tokenHint">Buat di <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>:
+      <ol>
+        <li>Repository access: <b>Only select repositories</b> → pilih repo landing page saja.</li>
+        <li>Permissions → Repository permissions → <b>Contents: Read and write</b> (lainnya biarkan).</li>
+        <li>Expiration sesuai keinginan; saat kedaluwarsa, buat token baru dan tempel di sini.</li>
+      </ol>
+    </div>
+
+    <label for="pass">Kata sandi data (min. 12 karakter)</label>
+    <input type="password" id="pass" autocomplete="new-password">
+    <label for="pass2">Ulangi kata sandi data</label>
+    <input type="password" id="pass2" autocomplete="new-password">
+    <div class="hint" id="passHint">Dipakai untuk mengenkripsi data dan untuk membukanya di landing page. Simpan baik-baik: kata sandi yang hilang tidak bisa dipulihkan; data lama hanya terbuka dengan kata sandi lamanya.</div>
+
+    <div class="row">
+      <button class="primary" id="save">Simpan</button>
+      <button id="test">Uji koneksi</button>
+      <button class="danger" id="clear">Hapus token & kata sandi</button>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="box">
+    <b>Status kiriman terakhir</b>
+    <div id="state" class="hint">—</div>
+    <div class="hint">Kirim manual: tab REKAP di panel Stockbit → tombol <b>⇪ PUBLIKASIKAN SEKARANG</b>.</div>
+  </div>
+</main>
+<script src="options.js"></script>
+</body>
+</html>

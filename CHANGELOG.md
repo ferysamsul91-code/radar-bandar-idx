@@ -1,5 +1,10 @@
 # Catatan perubahan
 
+## 0.14.0 — 2026-11-16
+- **Publikasi online (opsional, default nonaktif)**: ringkasan REKAP harian (daftar total institusi & asing beli/jual, deteksi institusi beli, hari ini dan 5 hari bursa) dikirim otomatis ke repo GitHub Anda setelah data penutupan lengkap, **terenkripsi** dengan kata sandi Anda (AES-GCM 256).
+- Landing page: bagian **REKAP harian** yang membuka data dengan kata sandi data, langsung di browser.
+- Halaman pengaturan ekstensi tersendiri untuk token GitHub dan kata sandi (tidak pernah diketik di halaman Stockbit). Tombol "Publikasikan sekarang" di tab REKAP.
+
 ## 0.13.0 — 2026-11-16
 - REKAP: daftar khusus **DAFTAR TOTAL INSTITUSI NET BELI** dan **NET JUAL** (peringkat, porsi dari total, hari beli/jual, asing searah/lawan, baris TOTAL).
 - Daftar total ikut di export PDF dan CSV.

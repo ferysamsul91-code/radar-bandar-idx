@@ -3,5 +3,6 @@ dist/
 fixtures/*.html
 fixtures/*_files/
 _site/
+.claude/
 test-results.json
 *.log

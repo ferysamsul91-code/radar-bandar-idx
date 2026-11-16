@@ -9,8 +9,11 @@ arus beli/jual lot besar.
 
 ## Batasan
 - Hanya membaca DOM yang tampil di layar. Tidak memanggil API internal Stockbit,
-  tidak membaca/menyimpan cookie atau token, tidak mengirim data ke luar, tidak ada order.
-- Izin ekstensi hanya `storage` (posisi panel, settings, ringkasan Broker Summary). Aktif hanya di
+  tidak membaca/menyimpan cookie atau token Stockbit, tidak mengirim data ke luar, tidak ada order.
+- **Satu pengecualian, atas permintaan pengguna:** *Publikasi online* (default NONAKTIF). Bila Anda aktifkan, ringkasan REKAP
+  dikirim **terenkripsi** ke repo GitHub Anda sendiri (lihat "Publikasi REKAP online" di bawah). Untuk itu ekstensi punya
+  service worker dan izin host `https://api.github.com/*`.
+- Izin ekstensi: `storage` (posisi panel, settings, riwayat REKAP) dan `api.github.com` (hanya untuk publikasi). Aktif hanya di
   `https://stockbit.com/orderbook*` (panel radar), `https://stockbit.com/symbol/*` (hanya membaca widget Broker Summary
   & panel Movers, tanpa panel radar) dan `https://stockbit.com/broker-analysis/*` (hanya membaca Top Buy/Top Sell).
 
@@ -188,7 +191,7 @@ npm.cmd test
 npm.cmd run build
 ```
 
-Hasil build ada di folder `dist/` (`manifest.json`, `content.js`, `config/`).
+Hasil build ada di folder `dist/` (`manifest.json`, `content.js`, `background.js`, `options.html`, `options.js`, `config/`).
 
 ## Landing page (GitHub Pages)
 - Sumber: `site/index.html` (+ `site/assets/rekap.png`, data rekaan dengan kode fiktif) dan `CHANGELOG.md`.
@@ -198,7 +201,22 @@ Hasil build ada di folder `dist/` (`manifest.json`, `content.js`, `config/`).
   tidak ikut repo (`.gitignore`), jadi tes penuh dijalankan lokal sebelum rilis.
 - Setelah repo dibuat: Settings -> Pages -> Source: **GitHub Actions**.
 - Rilis versi baru: naikkan versi (`package.json`, `src/manifest.json`, `VERSION` di `src/ui/Panel.ts`), tambah entri di
-  `CHANGELOG.md`, commit dan push ke `main`.
+  `CHANGELOG.md`, commit dan push ke `main`. Ekstensi juga menulis commit data ke `main`, jadi `git pull --rebase` dulu
+  sebelum push dari komputer.
+
+## Publikasi REKAP online (v0.14.0, opsional)
+- Alur: AUTO REKAP 16:20 WIB -> data penutupan lengkap (atau setelah 18:00, apa yang ada) -> content script menyusun
+  ringkasan (`core/publish.ts`: hari ini + 5 hari bursa, top 40 per daftar) -> service worker (`src/background`)
+  mengenkripsi (`core/seal.ts`: gzip, AES-GCM 256, PBKDF2-SHA256 310.000 iterasi, metadata `kind|day` sebagai AAD)
+  -> `PUT data/days/TANGGAL.enc.json` lewat GitHub API (1 commit) -> workflow Pages membangun ulang halaman.
+- Landing page (`site/rekap.js`) memuat `data/index.json` (daftar hari, dibuat `scripts/build-site.mjs`) lalu membuka
+  file hari terpilih dengan kata sandi di browser. Tanpa kata sandi hanya tanggal yang terbaca.
+- Pengaturan: chrome://extensions -> Radar Bandar IDX -> Details -> **Extension options** (atau tombol ⚙ di tab REKAP).
+  Isi repo `pemilik/nama-repo`, branch, token GitHub *fine-grained* (hanya repo itu, **Contents: Read and write**), dan
+  kata sandi data (min. 12 karakter). Token & kata sandi hanya dipakai di halaman pengaturan dan service worker,
+  tidak pernah di halaman Stockbit, dan tidak ikut file cadangan.
+- Kirim manual: tab REKAP -> **⇪ PUBLIKASIKAN SEKARANG** (menimpa file hari itu).
+- Kata sandi yang diganti tidak mengubah file lama: file lama tetap terbuka dengan kata sandi lamanya.
 
 ## Memuat ke Chrome
 1. Buka `chrome://extensions`.

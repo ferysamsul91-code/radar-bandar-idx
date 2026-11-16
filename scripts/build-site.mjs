@@ -156,4 +156,32 @@ if (left) throw new Error(`placeholder belum terisi: ${left.join(", ")}`);
 writeFileSync(join(out, "index.html"), page);
 writeFileSync(join(out, "version.json"), JSON.stringify({ version, updated: now.toISOString(), commit, tests, zip: zipName }, null, 2));
 writeFileSync(join(out, ".nojekyll"), "");
+
+// REKAP harian terenkripsi (dikirim ekstensi ke data/days/*.enc.json): salin apa adanya + daftar hari yang tersedia.
+// Hanya metadata terbuka (day, updatedAt) yang dibaca di sini; isinya tetap terenkripsi.
+const dataDir = join(root, "data", "days");
+const days = [];
+mkdirSync(join(out, "data", "days"), { recursive: true });
+if (existsSync(dataDir)) {
+  for (const f of readdirSync(dataDir)) {
+    if (!/^\d{4}-\d{2}-\d{2}\.enc\.json$/.test(f)) continue;
+    const raw = readFileSync(join(dataDir, f), "utf8");
+    let env;
+    try {
+      env = JSON.parse(raw);
+    } catch {
+      console.warn(`lewati ${f}: bukan JSON`);
+      continue;
+    }
+    if (env?.v !== 1 || env.alg !== "AES-GCM" || `${env.day}.enc.json` !== f) {
+      console.warn(`lewati ${f}: bukan amplop terenkripsi yang dikenal`);
+      continue;
+    }
+    writeFileSync(join(out, "data", "days", f), raw);
+    days.push({ day: env.day, updatedAt: env.updatedAt });
+  }
+}
+days.sort((a, b) => b.day.localeCompare(a.day));
+writeFileSync(join(out, "data", "index.json"), JSON.stringify({ updatedAt: now.toISOString(), days }, null, 2));
+console.log(`REKAP harian: ${days.length} hari${days[0] ? ` (terbaru ${days[0].day})` : ""}`);
 console.log(`_site siap: v${version}, ${zipName} (${kb(zipBuf.length)}, ${entries.length} file), ${tests}, ${updated}`);

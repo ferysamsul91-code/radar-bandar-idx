@@ -19,25 +19,59 @@ function copyManifest(): Plugin {
   };
 }
 
-export default defineConfig({
-  publicDir: false,
-  build: {
-    outDir: "dist",
-    emptyOutDir: true,
-    minify: false,
-    sourcemap: false,
-    // Content script MV3 harus classic script (bukan ES module) -> format IIFE.
-    lib: {
-      entry: resolve(import.meta.dirname, "src/content/index.ts"),
-      name: "RadarBandarIDX",
-      formats: ["iife"],
-      fileName: () => "content.js",
+// Entri tambahan (dibangun terpisah, satu file IIFE masing-masing, tanpa mengosongkan dist/):
+//   vite build --mode background -> dist/background.js (service worker)
+//   vite build --mode options    -> dist/options.js + dist/options.html (halaman pengaturan publikasi)
+const EXTRA: Record<string, { entry: string; file: string; name: string; html?: string }> = {
+  background: { entry: "src/background/index.ts", file: "background.js", name: "RadarBandarBG" },
+  options: { entry: "src/options/index.ts", file: "options.js", name: "RadarBandarOptions", html: "src/options/options.html" },
+};
+
+function copyHtml(src: string): Plugin {
+  return {
+    name: "copy-html",
+    apply: "build",
+    closeBundle() {
+      copyFileSync(resolve(import.meta.dirname, src), resolve(import.meta.dirname, "dist", "options.html"));
     },
-  },
-  plugins: [copyManifest()],
-  test: {
-    globals: true,
-    environment: "node",
-    include: ["tests/unit/**/*.test.ts"],
-  },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const extra = EXTRA[mode];
+  if (extra) {
+    return {
+      publicDir: false,
+      build: {
+        outDir: "dist",
+        emptyOutDir: false,
+        minify: false,
+        sourcemap: false,
+        lib: { entry: resolve(import.meta.dirname, extra.entry), name: extra.name, formats: ["iife"], fileName: () => extra.file },
+      },
+      plugins: extra.html ? [copyHtml(extra.html)] : [],
+    };
+  }
+  return {
+    publicDir: false,
+    build: {
+      outDir: "dist",
+      emptyOutDir: true,
+      minify: false,
+      sourcemap: false,
+      // Content script MV3 harus classic script (bukan ES module) -> format IIFE.
+      lib: {
+        entry: resolve(import.meta.dirname, "src/content/index.ts"),
+        name: "RadarBandarIDX",
+        formats: ["iife"],
+        fileName: () => "content.js",
+      },
+    },
+    plugins: [copyManifest()],
+    test: {
+      globals: true,
+      environment: "node",
+      include: ["tests/unit/**/*.test.ts"],
+    },
+  };
 });

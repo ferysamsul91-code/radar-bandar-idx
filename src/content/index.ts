@@ -27,7 +27,8 @@ import { RunningTradeTracker } from "../core/rtTracker";
 import { lastTradingDate, marketPhase, tradingDayKey, wibClock, type SessionCfg } from "../core/session";
 import { defaultSettings, loadSettings, type UserSettings } from "../core/settings";
 import type { BookSnapshot, Trade } from "../core/types";
-import { Panel, type BookRow, type TradeRow } from "../ui/Panel";
+import { Panel, VERSION, type BookRow, type TradeRow } from "../ui/Panel";
+import { buildPublishPayload, decidePublish, PUB_ON_KEY, PUB_STATE_KEY, type PublishState } from "../core/publish";
 import { rekapPdf } from "../ui/rekapPdf";
 import { toBytes } from "../core/pdf";
 import { arrangeViews, fillCodeSearch } from "./actions";
@@ -102,6 +103,8 @@ function boot(): void {
   const rtSel = selectors.runningTrade as RunningTradeSelectors;
   const defaults = defaultSettings(thresholdsJson as unknown as Record<string, unknown>, brokersJson);
   let settings: UserSettings = defaults;
+  /** Diisi di bagian PUBLIKASI ONLINE di bawah. */
+  let publishNow: (day: string, force: boolean) => Promise<void> = async () => {};
 
   const tracker = new RunningTradeTracker<RawTrade>();
   let hintTimer: ReturnType<typeof setTimeout> | undefined;
@@ -219,6 +222,14 @@ function boot(): void {
       store({ [SCAN_KEY]: codes });
     },
     onAutoRekap: () => void runAuto("final", true),
+    onPublish: () => void publishNow(tradingDay(), true),
+    onPublishSettings: () => {
+      try {
+        void chrome.runtime.sendMessage({ type: "rb-open-options" });
+      } catch {
+        panel.setHint("Buka chrome://extensions → Radar Bandar IDX → Details → Extension options");
+      }
+    },
     onExportBackup: () => {
       try {
         chrome.storage?.local.get(null, (all) => {
@@ -403,6 +414,49 @@ function boot(): void {
   };
   setTimeout(autoTick, 20_000);
   setInterval(autoTick, 60_000);
+
+  // PUBLIKASI ONLINE (opsional, default nonaktif): ringkasan REKAP dikirim TERENKRIPSI lewat service worker
+  // ke repo GitHub pengguna (lihat core/publish.ts). Token & kata sandi tidak pernah dibaca di halaman ini.
+  let pubOn = false;
+  let pubState: PublishState | null = null;
+  let pubLastTry = 0;
+  const pubInfo = () =>
+    pubState ? `${pubState.ok ? "✓" : "✗"} ${pubState.day} • ${new Date(pubState.at + 7 * 3600e3).toISOString().slice(11, 16)} WIB • ${pubState.msg}` : "";
+  const pushPub = () => panel.update({ publishOn: pubOn, publishInfo: pubInfo() });
+  try {
+    chrome.storage?.local.get([PUB_ON_KEY, PUB_STATE_KEY], (v) => {
+      pubOn = !!v?.[PUB_ON_KEY];
+      pubState = (v?.[PUB_STATE_KEY] as PublishState | undefined) ?? null;
+      pushPub();
+    });
+    chrome.storage?.onChanged.addListener((ch, area) => {
+      if (area !== "local" || !(ch[PUB_ON_KEY] || ch[PUB_STATE_KEY])) return;
+      if (ch[PUB_ON_KEY]) pubOn = !!ch[PUB_ON_KEY].newValue;
+      if (ch[PUB_STATE_KEY]) pubState = (ch[PUB_STATE_KEY].newValue as PublishState | undefined) ?? null;
+      pushPub();
+    });
+  } catch { /* di luar ekstensi */ }
+  publishNow = async (day: string, force: boolean) => {
+    pubLastTry = Date.now();
+    const payload = buildPublishPayload(rekapSrc, rekapHist, day, Date.now(), VERSION);
+    try {
+      const st = (await chrome.runtime.sendMessage({ type: "rb-publish", payload, force })) as PublishState | undefined;
+      if (force) panel.setHint(st ? `PUBLIKASI ${st.ok ? "berhasil" : "gagal"}: ${st.msg}` : "PUBLIKASI: service worker tidak menjawab");
+    } catch (e) {
+      panel.setHint(`PUBLIKASI gagal: ${String(e)} (refresh tab Stockbit setelah ekstensi di-reload)`);
+    }
+    if (force) setTimeout(() => panel.setHint(null), 10_000);
+  };
+  const pubTick = () => {
+    if (!pubOn || autoRunning) return;
+    const now = Date.now();
+    const day = lastTradingDate(now, sessionsCfg());
+    const c = completeness(rekapHist, day);
+    const d = decidePublish(now, sessionsCfg(), autoCfg().afterWIB, c.missing, c.fb || c.fs || c.inst || c.trace, pubState, pubLastTry);
+    if (d) void publishNow(d, false);
+  };
+  setTimeout(pubTick, 30_000);
+  setInterval(pubTick, 60_000);
 
   try {
     chrome.storage?.local.get(["rbPos", "rbSettings"], (v) => {

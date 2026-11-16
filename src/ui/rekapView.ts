@@ -166,8 +166,22 @@ function historyBlock(hist: RekapHistory, today: string, missingToday: string[] 
       komputer atau sebelum Remove ekstensi (data lokal ikut terhapus saat ekstensi di-Remove).</div></details>`;
 }
 
+type AutoBlockInfo = { info: string; cfg: AutoRekapCfg; pubOn?: boolean; pubInfo?: string };
+
+/** Baris PUBLIKASI ONLINE: status + tombol kirim sekarang / pengaturan. */
+function publishLine(auto: AutoBlockInfo): string {
+  if (!auto.pubOn) {
+    return `<div class="row" style="margin:2px 0 6px"><span class="small muted">PUBLIKASI ONLINE: nonaktif (landing page tanpa data REKAP).</span>
+      <button data-rekap="pubcfg">⚙ ATUR PUBLIKASI</button></div>`;
+  }
+  return `<div class="row" style="margin:2px 0 6px"><button data-rekap="publish" class="on">⇪ PUBLIKASIKAN SEKARANG</button>
+    <button data-rekap="pubcfg">⚙ PENGATURAN</button>
+    <span class="small muted">PUBLIKASI ONLINE aktif: ringkasan REKAP dikirim TERENKRIPSI ke repo GitHub Anda setelah data penutupan lengkap.</span></div>
+    ${auto.pubInfo ? `<div class="small">Kiriman terakhir: ${esc(auto.pubInfo)}</div>` : ""}`;
+}
+
 /** Blok AUTO REKAP: status otomatis + tombol ambil sekarang. */
-function autoBlock(auto: { info: string; cfg: AutoRekapCfg } | undefined): string {
+function autoBlock(auto: AutoBlockInfo | undefined): string {
   if (!auto) return "";
   const c = auto.cfg;
   const st = c.enabled
@@ -175,10 +189,11 @@ function autoBlock(auto: { info: string; cfg: AutoRekapCfg } | undefined): strin
     : "NONAKTIF (Settings → autoRekap.enabled)";
   return `<div class="row" style="margin:4px 0 6px"><button data-rekap="auto" class="on">⟳ AMBIL REKAP SEKARANG</button>
     <span class="small muted">AUTO REKAP: ${st}. Butuh 1 tab stockbit.com/orderbook terbuka; Stockbit dimuat di latar (iframe tersembunyi), tanpa API.</span></div>
-    ${auto.info ? `<div class="small">Terakhir: ${esc(auto.info)}</div>` : ""}`;
+    ${auto.info ? `<div class="small">Terakhir: ${esc(auto.info)}</div>` : ""}
+    ${publishLine(auto)}`;
 }
 
-export function rekapView(latest: RekapSources, hist: RekapHistory, sel: RangeSel, today: string, _now: number, missingToday: string[] | null = null, auto?: { info: string; cfg: AutoRekapCfg }): string {
+export function rekapView(latest: RekapSources, hist: RekapHistory, sel: RangeSel, today: string, _now: number, missingToday: string[] | null = null, auto?: AutoBlockInfo): string {
   const rep = makeReport(latest, hist, sel, today);
   const r = rep.rekap;
   const isRange = !!rep.from;
